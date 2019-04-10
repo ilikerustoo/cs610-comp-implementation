@@ -9,37 +9,38 @@ from twitter import Twitter
 WIKIDATA_QUERY_URL = "https://query.wikidata.org/sparql?query=%s&format=JSON"
 
 MID_TO_TICKER_QUERY = (
-    'SELECT ?companyLabel ?rootLabel ?tickerLabel ?exchangeNameLabel'
-    ' WHERE {'
+    "SELECT ?companyLabel ?rootLabel ?tickerLabel ?exchangeNameLabel"
+    " WHERE {"
     '  ?entity wdt:P646 "%s" .'
-    '  ?entity wdt:P176* ?manufacturer .'
-    '  ?manufacturer wdt:P1366* ?company .'
-    '  { ?company p:P414 ?exchange } UNION'
-    '  { ?company wdt:P127+ / wdt:P1366* ?root .'
-    '    ?root p:P414 ?exchange } UNION'
-    '  { ?company wdt:P749+ / wdt:P1366* ?root .'
-    '    ?root p:P414 ?exchange } .'
-    '  VALUES ?exchanges { wd:Q13677 wd:Q82059 } .'
-    '  ?exchange ps:P414 ?exchanges .'
-    '  ?exchange pq:P249 ?ticker .'
-    '  ?exchange ps:P414 ?exchangeName .'
-    '  FILTER NOT EXISTS { ?company wdt:P31 /'
-    '                               wdt:P279* wd:Q11032 } .'
-    '  FILTER NOT EXISTS { ?company wdt:P31 /'
-    '                               wdt:P279* wd:Q192283 } .'
-    '  FILTER NOT EXISTS { ?company wdt:P31 /'
-    '                               wdt:P279* wd:Q1684600 } .'
-    '  FILTER NOT EXISTS { ?company wdt:P31 /'
-    '                               wdt:P279* wd:Q14350 } .'
-    '  FILTER NOT EXISTS { ?company wdt:P31 /'
-    '                               wdt:P279* wd:Q1616075 } .'
-    '  FILTER NOT EXISTS { ?company wdt:P31 /'
-    '                               wdt:P279* wd:Q2001305 } .'
-    '  SERVICE wikibase:label {'
+    "  ?entity wdt:P176* ?manufacturer ."
+    "  ?manufacturer wdt:P1366* ?company ."
+    "  { ?company p:P414 ?exchange } UNION"
+    "  { ?company wdt:P127+ / wdt:P1366* ?root ."
+    "    ?root p:P414 ?exchange } UNION"
+    "  { ?company wdt:P749+ / wdt:P1366* ?root ."
+    "    ?root p:P414 ?exchange } ."
+    "  VALUES ?exchanges { wd:Q13677 wd:Q82059 } ."
+    "  ?exchange ps:P414 ?exchanges ."
+    "  ?exchange pq:P249 ?ticker ."
+    "  ?exchange ps:P414 ?exchangeName ."
+    "  FILTER NOT EXISTS { ?company wdt:P31 /"
+    "                               wdt:P279* wd:Q11032 } ."
+    "  FILTER NOT EXISTS { ?company wdt:P31 /"
+    "                               wdt:P279* wd:Q192283 } ."
+    "  FILTER NOT EXISTS { ?company wdt:P31 /"
+    "                               wdt:P279* wd:Q1684600 } ."
+    "  FILTER NOT EXISTS { ?company wdt:P31 /"
+    "                               wdt:P279* wd:Q14350 } ."
+    "  FILTER NOT EXISTS { ?company wdt:P31 /"
+    "                               wdt:P279* wd:Q1616075 } ."
+    "  FILTER NOT EXISTS { ?company wdt:P31 /"
+    "                               wdt:P279* wd:Q2001305 } ."
+    "  SERVICE wikibase:label {"
     '   bd:serviceParam wikibase:language "en" .'
-    '  }'
-    ' } GROUP BY ?companyLabel ?rootLabel ?tickerLabel ?exchangeNameLabel'
-    ' ORDER BY ?companyLabel ?rootLabel ?tickerLabel ?exchangeNameLabel')
+    "  }"
+    " } GROUP BY ?companyLabel ?rootLabel ?tickerLabel ?exchangeNameLabel"
+    " ORDER BY ?companyLabel ?rootLabel ?tickerLabel ?exchangeNameLabel"
+)
 
 
 class Checker:
@@ -79,9 +80,7 @@ class Checker:
             except KeyError:
                 exchange = None
 
-            data = {"name": name,
-                    "ticker": ticker,
-                    "exchange": exchange}
+            data = {"name": name, "ticker": ticker, "exchange": exchange}
 
             if root and root != name:
                 data["root"] = root
@@ -93,7 +92,6 @@ class Checker:
 
     def search_company_intweet(self, tweet):
 
-
         if not tweet:
 
             return None
@@ -104,12 +102,9 @@ class Checker:
             return None
 
         document = language.types.Document(
-            content=text,
-            type=language.enums.Document.Type.PLAIN_TEXT,
-            language="en")
+            content=text, type=language.enums.Document.Type.PLAIN_TEXT, language="en"
+        )
         entities = self.language_client.analyze_entities(document).entities
-
-
 
         companies = []
         for entity in entities:
@@ -126,23 +121,17 @@ class Checker:
 
             if not company_data:
 
-
                 continue
-
 
             for company in company_data:
 
                 sentiment = self.gnlp_sentiment(text)
-
 
                 company["sentiment"] = sentiment
 
                 tickers = [existing["ticker"] for existing in companies]
                 if not company["ticker"] in tickers:
                     companies.append(company)
-
-
-
 
         return companies
 
@@ -170,7 +159,6 @@ class Checker:
 
             return text
 
-
         for mention in mentions:
             try:
                 screen_name = "@%s" % mention["screen_name"]
@@ -179,17 +167,14 @@ class Checker:
 
                 continue
 
-
             pattern = compile(screen_name, IGNORECASE)
             text = pattern.sub(name, text)
 
         return text
 
-
     def retrieve_wikidata_data(self, query):
 
         query_url = WIKIDATA_QUERY_URL % quote_plus(query)
-
 
         response = get(query_url)
         try:
@@ -197,7 +182,6 @@ class Checker:
         except ValueError:
 
             return None
-
 
         try:
             results = response_json["results"]
@@ -208,31 +192,26 @@ class Checker:
 
         return bindings
 
-
     def convert_entity_string(self, entities):
 
         tostrings = [self.convert_oneentity(entity) for entity in entities]
         return "[%s]" % ", ".join(tostrings)
 
-
     def convert_oneentity(self, entity):
 
-        metadata = ", ".join(['"%s": "%s"' % (key, value) for
-                              key, value in entity.metadata.items()])
+        metadata = ", ".join(
+            ['"%s": "%s"' % (key, value) for key, value in entity.metadata.items()]
+        )
 
         mentions = ", ".join(['"%s"' % mention for mention in entity.mentions])
 
-        return ('{name: "%s",'
-                ' type: "%s",'
-                ' metadata: {%s},'
-                ' salience: %s,'
-                ' mentions: [%s]}') % (
-            entity.name,
-            entity.type,
-            metadata,
-            entity.salience,
-            mentions)
-
+        return (
+            '{name: "%s",'
+            ' type: "%s",'
+            " metadata: {%s},"
+            " salience: %s,"
+            " mentions: [%s]}"
+        ) % (entity.name, entity.type, metadata, entity.salience, mentions)
 
     def gnlp_sentiment(self, text):
 
@@ -241,14 +220,11 @@ class Checker:
             return 0
 
         document = language.types.Document(
-            content=text,
-            type=language.enums.Document.Type.PLAIN_TEXT,
-            language="en")
-        sentiment = self.language_client.analyze_sentiment(
-            document).document_sentiment
-
-
-
-
+            content=text, type=language.enums.Document.Type.PLAIN_TEXT, language="en"
+        )
+        sentiment = self.language_client.analyze_sentiment(document).document_sentiment
 
         return sentiment.score
+
+
+### Modification of https://github.com/maxbbraun/trump2cash

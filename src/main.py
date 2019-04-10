@@ -4,7 +4,7 @@ from http.server import HTTPServer
 from threading import Event
 from threading import Thread
 from time import sleep
-from analysis import Checker
+from sentiment import Checker
 from twitter import Twitter
 
 
@@ -17,12 +17,12 @@ Webserver_MESSAGE = "OK"
 
 
 class Webserver:
-
     def __init__(self):
         """Creates a Web server on a background thread."""
 
-        self.server = HTTPServer((Webserver_HOST, Webserver_PORT),
-                                 self.WebserverHandler)
+        self.server = HTTPServer(
+            (Webserver_HOST, Webserver_PORT), self.WebserverHandler
+        )
         self.thread = Thread(target=self.server.serve_forever)
         self.thread.daemon = True
 
@@ -36,7 +36,6 @@ class Webserver:
         self.server.server_close()
 
     class WebserverHandler(BaseHTTPRequestHandler):
-
         def _set_headers(self):
             self.send_response(200)
             self.send_header("Content-type", "text/plain")
@@ -51,7 +50,6 @@ class Webserver:
 
 
 class Main:
-
     def __init__(self):
 
         self.twitter = Twitter()
@@ -60,27 +58,21 @@ class Main:
 
         checker = Checker()
 
-
         companies = checker.search_company_intweet(tweet)
 
         if not companies:
             return
-
-
 
         twitter = Twitter()
         twitter.tweet(companies, tweet)
 
     def run_session(self):
 
-
         try:
             self.twitter.start_streaming(self.twitter_callback)
 
-
         finally:
             self.twitter.stop_streaming()
-
 
     def backoff(self, tries):
 
@@ -106,7 +98,7 @@ class Main:
                 backoff_start = now
 
             if tries >= MAX_TRIES:
-                 
+
                 break
 
             self.backoff(tries)
@@ -121,3 +113,6 @@ if __name__ == "__main__":
         Main().run()
     finally:
         Webserver.stop()
+
+
+####Modification of https://github.com/maxbbraun/trump2cash

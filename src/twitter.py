@@ -34,33 +34,32 @@ class Twitter:
 
     def __init__(self):
 
-
-        self.twitter_auth = OAuthHandler(TWITTER_CONSUMER_KEY,
-                                         TWITTER_CONSUMER_SECRET)
-        self.twitter_auth.set_access_token(TWITTER_ACCESS_TOKEN,
-                                           TWITTER_ACCESS_TOKEN_SECRET)
-        self.twitter_api = API(auth_handler=self.twitter_auth,
-                               retry_count=API_RETRY_COUNT,
-                               retry_delay=API_RETRY_DELAY_S,
-                               retry_errors=API_RETRY_ERRORS,
-                               wait_on_rate_limit=True,
-                               wait_on_rate_limit_notify=True)
+        self.twitter_auth = OAuthHandler(TWITTER_CONSUMER_KEY, TWITTER_CONSUMER_SECRET)
+        self.twitter_auth.set_access_token(
+            TWITTER_ACCESS_TOKEN, TWITTER_ACCESS_TOKEN_SECRET
+        )
+        self.twitter_api = API(
+            auth_handler=self.twitter_auth,
+            retry_count=API_RETRY_COUNT,
+            retry_delay=API_RETRY_DELAY_S,
+            retry_errors=API_RETRY_ERRORS,
+            wait_on_rate_limit=True,
+            wait_on_rate_limit_notify=True,
+        )
         self.twitter_listener = None
 
     def start_streaming(self, callback):
         """Starts streaming tweets and returning data to the callback."""
 
-        self.twitter_listener = TwitterListener(
-            callback=callback)
+        self.twitter_listener = TwitterListener(callback=callback)
         twitter_stream = Stream(self.twitter_auth, self.twitter_listener)
-
 
         twitter_stream.filter(follow=[ACC_USER_ID])
 
-
         if self.twitter_listener and self.twitter_listener.get_error_status():
-            raise Exception("Twitter API error: %s" %
-                            self.twitter_listener.get_error_status())
+            raise Exception(
+                "Twitter API error: %s" % self.twitter_listener.get_error_status()
+            )
 
     def stop_streaming(self):
         """Stops the current stream."""
@@ -68,7 +67,6 @@ class Twitter:
         if not self.twitter_listener:
 
             return
-
 
         self.twitter_listener.stop_queue()
         self.twitter_listener = None
@@ -81,19 +79,16 @@ class Twitter:
         link = self.get_tweet_link(tweet)
         text = self.make_tweet_text(companies, link)
 
-
         self.twitter_api.update_status(text)
 
     def make_tweet_text(self, companies, link):
         """Generates the text for a tweet."""
-
 
         names = []
         for company in companies:
             name = company["name"]
             if name not in names:
                 names.append(name)
-
 
         tickers = {}
         sentiments = {}
@@ -107,7 +102,6 @@ class Twitter:
 
                     sentiments[name] = sentiment
 
-
         lines = []
         for name in names:
             sentiment_str = self.gnlp_sentiment_emoji(sentiments[name])
@@ -115,14 +109,12 @@ class Twitter:
             line = "%s %s %s" % (name, sentiment_str, tickers_str)
             lines.append(line)
 
-
         lines_str = "\n".join(lines)
         size = len(lines_str) + 1 + len(link)
         if size > MAX_TWEET_SIZE:
 
             lines_size = MAX_TWEET_SIZE - len(link) - 2
             lines_str = "%s\u2026" % lines_str[:lines_size]
-
 
         text = "%s\n%s" % (lines_str, link)
 
@@ -140,18 +132,15 @@ class Twitter:
         if sentiment < 0:
             return GRAPH_DOWN
 
-
         return NEUTRAL
 
     def get_tweet(self, tweet_id):
         """Looks up metadata for a single tweet."""
 
-
         status = self.twitter_api.get_status(tweet_id, tweet_mode="extended")
         if not status:
 
             return None
-
 
         return status._json
 
@@ -160,26 +149,21 @@ class Twitter:
 
         tweets = []
 
-
         since_id = str(int(since_id) - 1)
 
-
-        for status in Cursor(self.twitter_api.user_timeline,
-                             user_id=ACC_USER_ID, since_id=since_id,
-                             tweet_mode="extended").items():
-
+        for status in Cursor(
+            self.twitter_api.user_timeline,
+            user_id=ACC_USER_ID,
+            since_id=since_id,
+            tweet_mode="extended",
+        ).items():
 
             tweets.append(status._json)
-
-
 
         return tweets
 
     def get_tweet_text(self, tweet):
         """Returns the full text of a tweet."""
-
-
-
 
         try:
             if "extended_tweet" in tweet:
@@ -218,7 +202,6 @@ class TwitterListener(StreamListener):
 
     def __init__(self, callback):
 
-
         self.callback = callback
         self.error_status = None
         self.start_queue()
@@ -239,13 +222,9 @@ class TwitterListener(StreamListener):
     def stop_queue(self):
         """Shuts down the queue and worker threads."""
 
-
         if self.queue:
 
             self.queue.join()
-
-
-
 
         if self.workers:
 
@@ -254,16 +233,8 @@ class TwitterListener(StreamListener):
 
                 worker.join()
 
-
-
     def process_queue(self, worker_id):
         """Continuously processes tasks on the queue."""
-
-
-
-
-
-
 
         while not self.stop_event.is_set():
             try:
@@ -274,20 +245,12 @@ class TwitterListener(StreamListener):
                 end_time = time()
                 qsize = self.queue.qsize()
 
-
             except Empty:
-
 
                 continue
 
-
-
-
-
-
     def on_error(self, status):
         """Handles any API errors."""
-
 
         self.error_status = status
         self.stop_queue()
@@ -300,10 +263,8 @@ class TwitterListener(StreamListener):
     def on_data(self, data):
         """Puts a task to process the new data on the queue."""
 
-
         if self.stop_event.is_set():
             return False
-
 
         self.queue.put(data)
         return True
@@ -326,14 +287,11 @@ class TwitterListener(StreamListener):
 
             return
 
-
-
         if user_id_str != ACC_USER_ID:
-
 
             return
 
-
-
-
         self.callback(tweet)
+
+
+###Source at https://github.com/maxbbraun/trump2cash
