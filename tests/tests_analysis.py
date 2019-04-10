@@ -3,20 +3,20 @@ from google.cloud import language
 from os import getenv
 from pytest import fixture
 
-from checker import Checker
-from checker import MID_TO_TICKER_QUERY
+from analysis import Checker
+from analysis import MID_TO_TICKER_QUERY
 from twitter import Twitter
 
 
 @fixture
 def checker():
-    return Checker(logs_to_cloud=False)
+    return Checker()
 
 
 def get_tweet(tweet_id):
     """Looks up data for a single tweet."""
 
-    twitter = Twitter(logs_to_cloud=False)
+    twitter = Twitter()
     return twitter.get_tweet(tweet_id)
 
 
@@ -24,7 +24,7 @@ def get_tweet_text(tweet_id):
     """Looks up the text for a single tweet."""
 
     tweet = get_tweet(tweet_id)
-    checker = Checker(logs_to_cloud=False)
+    checker = Checker()
     return checker.get_longtext(tweet)
 
 

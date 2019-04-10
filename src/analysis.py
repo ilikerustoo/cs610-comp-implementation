@@ -4,14 +4,10 @@ from re import IGNORECASE
 from requests import get
 from urllib.parse import quote_plus
 
-from logs import Logs
 from twitter import Twitter
 
-# GET request to the Wikidata API.
 WIKIDATA_QUERY_URL = "https://query.wikidata.org/sparql?query=%s&format=JSON"
 
-# A Wikidata SPARQL query to find stock ticker symbols and other information
-# for a company. The string parameter is the Freebase ID of the company.
 MID_TO_TICKER_QUERY = (
     'SELECT ?companyLabel ?rootLabel ?tickerLabel ?exchangeNameLabel'
     ' WHERE {'
@@ -49,10 +45,9 @@ MID_TO_TICKER_QUERY = (
 class Checker:
     """A helper for analyzing company data in text."""
 
-    def __init__(self, logs_to_cloud):
-        self.logs = Logs(name="checker", to_cloud=logs_to_cloud)
+    def __init__(self):
         self.language_client = language.LanguageServiceClient()
-        self.twitter = Twitter(logs_to_cloud=logs_to_cloud)
+        self.twitter = Twitter()
 
     def scrape_cmpy_info(self, mid):
 
@@ -60,10 +55,8 @@ class Checker:
         bindings = self.retrieve_wikidata_data(query)
 
         if not bindings:
-            self.logs.debug("No company data found for MID: %s" % mid)
             return None
 
-        # Collect the data from the response.
         datas = []
         for binding in bindings:
             try:
@@ -94,10 +87,7 @@ class Checker:
                 data["root"] = root
 
             if data not in datas:
-                self.logs.debug("Adding company data: %s" % data)
                 datas.append(data)
-            else:
-                self.logs.warn("Skipping duplicate company data: %s" % data)
 
         return datas
 
@@ -105,12 +95,12 @@ class Checker:
 
 
         if not tweet:
-            self.logs.warn("No tweet to find companies.")
+
             return None
 
         text = self.get_longtext(tweet)
         if not text:
-            self.logs.error("Failed to get text from tweet: %s" % tweet)
+
             return None
 
         document = language.types.Document(
@@ -118,8 +108,8 @@ class Checker:
             type=language.enums.Document.Type.PLAIN_TEXT,
             language="en")
         entities = self.language_client.analyze_entities(document).entities
-        self.logs.debug("Found entities: %s" %
-                        self.convert_entity_string(entities))
+
+
 
         companies = []
         for entity in entities:
@@ -129,30 +119,30 @@ class Checker:
             try:
                 mid = metadata["mid"]
             except KeyError:
-                self.logs.debug("No MID found for entity: %s" % name)
+
                 continue
 
             company_data = self.scrape_cmpy_info(mid)
 
             if not company_data:
-                self.logs.debug("No company data found for entity: %s (%s)" %
-                                (name, mid))
+
+
                 continue
-            self.logs.debug("Found company data: %s" % company_data)
+
 
             for company in company_data:
 
                 sentiment = self.gnlp_sentiment(text)
-                self.logs.debug("Using sentiment for company: %s %s" %
-                                (sentiment, company))
+
+
                 company["sentiment"] = sentiment
 
                 tickers = [existing["ticker"] for existing in companies]
                 if not company["ticker"] in tickers:
                     companies.append(company)
-                else:
-                    self.logs.warn(
-                        "Skipping company with duplicate ticker: %s" % company)
+
+
+
 
         return companies
 
@@ -162,34 +152,34 @@ class Checker:
         """
 
         if not tweet:
-            self.logs.warn("No tweet to expand text.")
+
             return None
 
         try:
             text = self.twitter.get_tweet_text(tweet)
             mentions = tweet["entities"]["user_mentions"]
         except KeyError:
-            self.logs.error("Malformed tweet: %s" % tweet)
+
             return None
 
         if not text:
-            self.logs.warn("Empty text.")
+
             return None
 
         if not mentions:
-            self.logs.debug("No mentions.")
+
             return text
 
-        self.logs.debug("Using mentions: %s" % mentions)
+
         for mention in mentions:
             try:
                 screen_name = "@%s" % mention["screen_name"]
                 name = mention["name"]
             except KeyError:
-                self.logs.warn("Malformed mention: %s" % mention)
+
                 continue
 
-            self.logs.debug("Expanding mention: %s %s" % (screen_name, name))
+
             pattern = compile(screen_name, IGNORECASE)
             text = pattern.sub(name, text)
 
@@ -199,21 +189,21 @@ class Checker:
     def retrieve_wikidata_data(self, query):
 
         query_url = WIKIDATA_QUERY_URL % quote_plus(query)
-        self.logs.debug("Wikidata query: %s" % query_url)
+
 
         response = get(query_url)
         try:
             response_json = response.json()
         except ValueError:
-            self.logs.error("Failed to decode JSON response: %s" % response)
+
             return None
-        self.logs.debug("Wikidata response: %s" % response_json)
+
 
         try:
             results = response_json["results"]
             bindings = results["bindings"]
         except KeyError:
-            self.logs.error("Malformed Wikidata response: %s" % response_json)
+
             return None
 
         return bindings
@@ -247,7 +237,7 @@ class Checker:
     def gnlp_sentiment(self, text):
 
         if not text:
-            self.logs.warn("No sentiment for empty text.")
+
             return 0
 
         document = language.types.Document(
@@ -257,8 +247,8 @@ class Checker:
         sentiment = self.language_client.analyze_sentiment(
             document).document_sentiment
 
-        self.logs.debug(
-            "Sentiment score and magnitude for text: %s %s \"%s\"" %
-            (sentiment.score, sentiment.magnitude, text))
+
+
+             
 
         return sentiment.score

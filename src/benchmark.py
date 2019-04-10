@@ -5,7 +5,7 @@ from analysis import Checker
 from trading import Trading
 from twitter import Twitter
 
-SINCE_TWEET_ID = "806134244384899072" # change this
+SINCE_TWEET_ID = "1101340141501714432" # change this
 FUND_DOLLARS = 100000
 TRADE_FEE = 4.95
 
@@ -105,9 +105,9 @@ def should_trade(strategy, date, previous_trade_date):
 
 
 if __name__ == "__main__":
-    checker = Checker(logs_to_cloud=False)
-    trading = Trading(logs_to_cloud=False)
-    twitter = Twitter(logs_to_cloud=False)
+    checker = Checker()
+    trading = Trading()
+    twitter = Twitter()
 
     # Look up the metadata for the tweets.
     tweets = twitter.get_tweets(SINCE_TWEET_ID)

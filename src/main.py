@@ -4,13 +4,10 @@ from http.server import HTTPServer
 from threading import Event
 from threading import Thread
 from time import sleep
-
 from analysis import Checker
-from logs import Logs
-from trading import Trading
 from twitter import Twitter
 
-LOGS_TO_CLOUD = False
+
 BACKOFF_STEP_S = 0.1
 MAX_TRIES = 12
 BACKOFF_RESET_S = 30 * 60
@@ -56,39 +53,39 @@ class Webserver:
 class Main:
 
     def __init__(self):
-        self.logs = Logs(name="main", to_cloud=LOGS_TO_CLOUD)
-        self.twitter = Twitter(logs_to_cloud=LOGS_TO_CLOUD)
+
+        self.twitter = Twitter()
 
     def twitter_callback(self, tweet):
 
-        checker = Checker(logs_to_cloud=LOGS_TO_CLOUD)
-        logs = Logs(name="main-callback", to_cloud=LOGS_TO_CLOUD)
+        checker = Checker()
+
 
         companies = checker.search_company_intweet(tweet)
-        logs.info("Using companies: %s" % companies)
+
         if not companies:
             return
 
-        trading = Trading(logs_to_cloud=LOGS_TO_CLOUD)
 
-        twitter = Twitter(logs_to_cloud=LOGS_TO_CLOUD)
+
+        twitter = Twitter()
         twitter.tweet(companies, tweet)
 
     def run_session(self):
 
-        self.logs.info("Starting new session.")
+
         try:
             self.twitter.start_streaming(self.twitter_callback)
-        except:
-            self.logs.catch()
+
+
         finally:
             self.twitter.stop_streaming()
-            self.logs.info("Ending session.")
+
 
     def backoff(self, tries):
 
         delay = BACKOFF_STEP_S * pow(2, tries)
-        self.logs.warn("Waiting for %.1f seconds." % delay)
+
         sleep(delay)
 
     def run(self):
@@ -100,16 +97,16 @@ class Main:
 
             now = datetime.now()
             if tries == 0:
-                self.logs.debug("Starting first backoff sequence.")
+
                 backoff_start = now
 
             if (now - backoff_start).total_seconds() > BACKOFF_RESET_S:
-                self.logs.debug("Starting new backoff sequence.")
+
                 tries = 0
                 backoff_start = now
 
             if tries >= MAX_TRIES:
-                self.logs.warn("Exceeded maximum retry count.")
+                 
                 break
 
             self.backoff(tries)
