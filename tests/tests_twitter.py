@@ -11,7 +11,7 @@ from twitter import TWITTER_ACCESS_TOKEN_SECRET
 
 @fixture
 def twitter():
-    return Twitter(logs_to_cloud=False)
+    return Twitter()
 
 
 def test_environment_variables():
