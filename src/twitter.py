@@ -16,11 +16,11 @@ TWITTER_ACCESS_TOKEN = getenv("TWITTER_ACCESS_TOKEN")
 TWITTER_ACCESS_TOKEN_SECRET = getenv("TWITTER_ACCESS_TOKEN_SECRET")
 TWITTER_CONSUMER_KEY = getenv("TWITTER_CONSUMER_KEY")
 TWITTER_CONSUMER_SECRET = getenv("TWITTER_CONSUMER_SECRET")
-TRUMP_USER_ID = "1112802541018992640"
+ACC_USER_ID = "1112802541018992640"
 TWEET_URL = "https://twitter.com/%s/status/%s"
-EMOJI_THUMBS_UP = "\U0001F4C8"
-EMOJI_THUMBS_DOWN = "\U0001F4C9"
-EMOJI_SHRUG = "\U0001F340"
+GRAPH_UP = "\U0001F4C8"
+GRAPH_DOWN = "\U0001F4C9"
+NEUTRAL = "\U0001F340"
 MAX_TWEET_SIZE = 140
 NUM_THREADS = 100
 QUEUE_TIMEOUT_S = 5 * 60
@@ -55,7 +55,7 @@ class Twitter:
         twitter_stream = Stream(self.twitter_auth, self.twitter_listener)
 
 
-        twitter_stream.filter(follow=[TRUMP_USER_ID])
+        twitter_stream.filter(follow=[ACC_USER_ID])
 
 
         if self.twitter_listener and self.twitter_listener.get_error_status():
@@ -132,16 +132,16 @@ class Twitter:
         """Returns the emoji matching the sentiment."""
 
         if not sentiment:
-            return EMOJI_SHRUG
+            return NEUTRAL
 
         if sentiment > 0:
-            return EMOJI_THUMBS_UP
+            return GRAPH_UP
 
         if sentiment < 0:
-            return EMOJI_THUMBS_DOWN
+            return GRAPH_DOWN
 
 
-        return EMOJI_SHRUG
+        return NEUTRAL
 
     def get_tweet(self, tweet_id):
         """Looks up metadata for a single tweet."""
@@ -165,7 +165,7 @@ class Twitter:
 
 
         for status in Cursor(self.twitter_api.user_timeline,
-                             user_id=TRUMP_USER_ID, since_id=since_id,
+                             user_id=ACC_USER_ID, since_id=since_id,
                              tweet_mode="extended").items():
 
 
@@ -328,7 +328,7 @@ class TwitterListener(StreamListener):
 
 
 
-        if user_id_str != TRUMP_USER_ID:
+        if user_id_str != ACC_USER_ID:
 
 
             return
