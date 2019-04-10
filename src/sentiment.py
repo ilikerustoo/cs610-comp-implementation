@@ -249,6 +249,6 @@ class Checker:
 
 
 
-             
+
 
         return sentiment.score

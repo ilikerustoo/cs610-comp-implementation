@@ -3,8 +3,8 @@ from google.cloud import language
 from os import getenv
 from pytest import fixture
 
-from analysis import Checker
-from analysis import MID_TO_TICKER_QUERY
+from sentiment import Checker
+from sentiment import MID_TO_TICKER_QUERY
 from twitter import Twitter
 
 
